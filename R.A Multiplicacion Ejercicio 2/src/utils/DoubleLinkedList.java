@@ -1,5 +1,6 @@
 package utils;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -141,13 +142,24 @@ public class DoubleLinkedList<T> implements List<T> {
     @Override
     public void add(T value) {
         if (value != null) {
-            Nodo<T> last = getLastElement();
             Nodo<T> new_node = new Nodo<>(value);
-            last.setRight(new_node);
-            if (lenght != 0) new_node.setLeft(last);
-            tail.setLeft(new_node);
-            lenght++;
 
+            if (lenght == 0) {
+                // Si la lista está vacía
+                root.setRight(new_node);
+                new_node.setLeft(root);
+                tail.setLeft(new_node);
+                new_node.setRight(tail);
+            } else {
+                // Si la lista tiene elementos
+                Nodo<T> last = tail.getLeft();
+                last.setRight(new_node);
+                new_node.setLeft(last);
+                new_node.setRight(tail);
+                tail.setLeft(new_node);
+            }
+
+            lenght++;
         }
     }
 
@@ -527,7 +539,7 @@ public class DoubleLinkedList<T> implements List<T> {
                 return sub_node.getValue();
             }
         };
-    } // end it
+    } // end it 
 
     public Iterator<T> left() {
         return new Iterator<T>() {
@@ -568,45 +580,64 @@ public class DoubleLinkedList<T> implements List<T> {
         return cadena.append(" ] ").toString();
     }
 
-    public <T extends Number> DoubleLinkedList<Integer> multiply(DoubleLinkedList<T> other) {
-        DoubleLinkedList<Integer> result = new DoubleLinkedList<>(); // Lista para almacenar el resultado
-        int[] tempResult = new int[(int)(this.lenght + other.lenght)]; // Arreglo temporal para almacenar el resultado
+    // ---------------------------------------------------------------------
 
-        Nodo<T> current1 = this.root.getRight(); // Primer número (tipo T)
-        int index1 = 0;
-
-        // Multiplicamos cada dígito de la primera lista por cada dígito de la segunda lista
-        while (current1 != null && current1 != tail) {
-            Nodo<T> current2 = other.root.getRight(); // Cambiar a Nodo<T>
-            int index2 = 0;
-
-            while (current2 != null && current2 != tail) {
-                int product = current1.getValue().intValue() * current2.getValue().intValue(); // Usar intValue() para obtener el valor como int
-                tempResult[index1 + index2] += product; // Sumar al índice correspondiente
-                current2 = current2.getRight();
-                index2++;
-            }
-
-            current1 = current1.getRight();
-            index1++;
-        }
-
-        // Manejar el acarreo y llenar la lista de resultados
-        for (int i = 0; i < tempResult.length; i++) {
-            if (tempResult[i] != 0) {
-                result.add(tempResult[i] % 10); // Agregar el dígito menos significativo
-                if (i + 1 < tempResult.length) {
-                    tempResult[i + 1] += tempResult[i] / 10; // Acarreo
-                }
-            }
-        }
-
-        // Si la lista resultante está vacía, agregar un 0
-        if (result.isEmpty()) {
-            result.add(0);
-        }
-
-        return result;
+    // geters para obtener ese show en el main
+    public Nodo<T> getRoot() {
+        return root;
     }
 
+    public Nodo<T> getTail() {
+        return tail;
+    }
+
+    public DoubleLinkedList<Integer> genMult(DoubleLinkedList<Integer> L1, DoubleLinkedList<Integer> L2) {
+        DoubleLinkedList<Integer> res = new DoubleLinkedList<>();
+
+        int num1 = obtenerNumero(L1);
+        int num2 = obtenerNumero(L2);
+        int resultado = num1 * num2;
+
+        convertirALista(resultado, res);
+
+        return res;
+    }
+    /*
+    𝑂 (𝑛 + 𝑚) pq se suman los tiempos d cada lista
+    https://es.wikipedia.org/wiki/Complejidad_temporal
+     */
+
+    private int obtenerNumero(DoubleLinkedList<Integer> lista) {
+        int numero = 0;
+        int multiplicador = 1;
+        Nodo<Integer> actual = lista.tail.getLeft(); // iteramos desde la cola, porque es una multplicacion cmo si fuera a papel.
+
+        while (actual != lista.root) {
+            numero += actual.getValue() * multiplicador;
+            multiplicador *= 10;
+            actual = actual.getLeft();
+        }
+//        ⥦
+        return numero;
+    }
+
+    private void convertirALista(int numero, DoubleLinkedList<Integer> lista) {
+        // si tenemos solamente 0, agregamos solo un 0
+        if (numero == 0) {
+            lista.add(0);
+            return;
+        }
+
+        // creamos una lista paa que este mas sencillo iterar
+        ArrayList<Integer> digitos = new ArrayList<>();
+        while (numero > 0) {
+            digitos.add(0, numero % 10);
+            numero /= 10;
+        }
+
+        // agregamos todos los numeros a la lista del resultado
+        for (Integer digito : digitos) {
+            lista.add(digito);
+        }
+    }
 }
